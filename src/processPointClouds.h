@@ -17,6 +17,7 @@
 #include <vector>
 #include <ctime>
 #include <chrono>
+#include <unordered_set>
 #include "render/box.h"
 
 template<typename PointT>
@@ -36,6 +37,18 @@ public:
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SeparateClouds(
         pcl::PointIndices::Ptr inliers, typename pcl::PointCloud<PointT>::Ptr cloud);
+
+    // get random value in range [lowerBound, upperBound]
+    size_t randomInRange(const size_t lowerBound, const size_t upperBound);
+
+    // ransac model inliers
+    template<typename ModelT>
+    std::unordered_set<int> modelInliers(
+        const ModelT& model, typename pcl::PointCloud<PointT>::Ptr cloud, float distanceTol);
+
+    // ransac with plane model
+    std::unordered_set<int> RansacPlane(
+        typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol);
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlane(
         typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);

@@ -1,6 +1,7 @@
 // PCL lib Functions for processing point clouds
 
 #include "processPointClouds.h"
+#include "quiz/ransac/plane_impl.h"
 
 
 //constructor:
@@ -62,6 +63,80 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
     return segResult;
 }
 
+template<typename PointT>
+size_t ProcessPointClouds<PointT>::randomInRange(const size_t lowerBound, const size_t upperBound)
+{
+    if (lowerBound < upperBound)
+    {
+        std::random_device rd;
+        std::mt19937 generator(rd());
+        std::uniform_int_distribution<size_t> dist(lowerBound, upperBound);
+        return dist(generator);
+    }
+    return lowerBound;
+}
+
+template<typename PointT>
+template<typename ModelT>
+std::unordered_set<int> ProcessPointClouds<PointT>::modelInliers(
+    const ModelT& model,
+    typename pcl::PointCloud<PointT>::Ptr cloud,
+    float distanceTol)
+{
+    std::unordered_set<int> inliers;
+    for (int i = 0; i < cloud->points.size(); ++i)
+    {
+        if (model.distanceToPoint(cloud->points[i]) <= distanceTol)
+        {
+            inliers.insert(i);
+        }
+    }
+    return inliers;
+}
+
+template<typename PointT>
+std::unordered_set<int> ProcessPointClouds<PointT>::RansacPlane(
+    typename pcl::PointCloud<PointT>::Ptr cloud,
+    int maxIterations, float distanceTol)
+{
+    using namespace udacity_ransac;
+    std::unordered_set<int> inliersResult;
+
+    const size_t cloudSize = cloud->size();
+    if (cloudSize >= 3)
+    {
+        for (int i = 0; i < maxIterations; ++i)
+        {
+            size_t indexP1 = randomInRange(0, cloudSize - 1);
+            size_t indexP2 = randomInRange(0, cloudSize - 1);
+            size_t indexP3 = randomInRange(0, cloudSize - 1);
+            while (indexP2 == indexP1)
+            {
+                indexP2 = randomInRange(0, cloudSize - 1);
+            }
+            while (indexP3 == indexP1 || indexP3 == indexP2)
+            {
+                indexP3 = randomInRange(0, cloudSize - 1);
+            }
+            try
+            {
+                Plane<PointT> model(cloud->points[indexP1], cloud->points[indexP2], cloud->points[indexP3]);
+                auto inliersTmp = modelInliers(model, cloud, distanceTol);
+                if (inliersTmp.size() > inliersResult.size())
+                {
+                    inliersResult = inliersTmp;
+                }
+            }
+            catch (std::exception&)
+            {
+                continue;
+            }
+        }
+    }
+
+    return inliersResult;
+}
+
 
 template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr,
@@ -71,8 +146,9 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
 
-    pcl::SACSegmentation<PointT> seg;
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+/*
+    pcl::SACSegmentation<PointT> seg;
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
     seg.setOptimizeCoefficients(true);
     seg.setModelType(pcl::SACMODEL_PLANE);
@@ -81,10 +157,16 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
     seg.setDistanceThreshold(distanceThreshold);
     seg.setInputCloud(cloud);
     seg.segment(*inliers, *coefficients);
+*/
 
-    if (inliers->indices.empty())
+    std::unordered_set<int> inlierIndices = RansacPlane(cloud, maxIterations, distanceThreshold);
+    if (inlierIndices.empty())
     {
         std::cout << "Could not estimate plane parameters for given cloud" << std::endl;
+    }
+    for (const auto& index : inlierIndices)
+    {
+        inliers->indices.push_back(index);
     }
 
     auto endTime = std::chrono::steady_clock::now();

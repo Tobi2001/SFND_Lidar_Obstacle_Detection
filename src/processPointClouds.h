@@ -19,6 +19,7 @@
 #include <chrono>
 #include <unordered_set>
 #include "render/box.h"
+#include "quiz/cluster/kdtree.h"
 
 template<typename PointT>
 class ProcessPointClouds
@@ -52,6 +53,13 @@ public:
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlane(
         typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
+
+    void proximity(
+        int pointIndex, typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>* tree,
+        float distanceTol, std::vector<int>& cluster, std::unordered_set<int>& processedPoints);
+
+    std::vector<std::vector<int>> euclideanCluster(
+        typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>* tree, float distanceTol);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(
         typename pcl::PointCloud<PointT>::Ptr cloud,

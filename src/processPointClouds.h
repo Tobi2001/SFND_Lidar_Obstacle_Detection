@@ -55,11 +55,13 @@ public:
         typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
 
     void proximity(
-        int pointIndex, typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>* tree,
+        int pointIndex, typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>& tree,
         float distanceTol, std::vector<int>& cluster, std::unordered_set<int>& processedPoints);
 
     std::vector<std::vector<int>> euclideanCluster(
-        typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>* tree, float distanceTol);
+        typename pcl::PointCloud<PointT>::Ptr cloud,
+        KdTree<PointT, 3>& tree,
+        float distanceTol);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(
         typename pcl::PointCloud<PointT>::Ptr cloud,

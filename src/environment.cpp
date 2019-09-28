@@ -75,16 +75,14 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     }
 }
 
-void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
+void cityBlock(
+    pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointClouds<pcl::PointXYZI>& pcProcessor,
+    const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud)
 {
-    ProcessPointClouds<pcl::PointXYZI> pcProcessor;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pcProcessor.loadPcd(
-        "../src/sensors/data/pcd/data_1/0000000000.pcd");
-
     auto filteredCloud = pcProcessor.FilterCloud(inputCloud, 0.2f, Eigen::Vector4f(-10.f, -5.f, -3.f, 1.f),
             Eigen::Vector4f(27.f, 6.5f, 1.f, 1.f));
 
-    auto planeFilterPair = pcProcessor.SegmentPlane(filteredCloud, 100, 0.2f);
+    auto planeFilterPair = pcProcessor.SegmentPlane(filteredCloud, 50, 0.2f);
     renderPointCloud(viewer, planeFilterPair.first, "PlanePoints", Color(0, 1, 0));
 
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pcProcessor.Clustering(planeFilterPair.second,
@@ -132,12 +130,29 @@ int main()
     std::cout << "starting enviroment" << std::endl;
 
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-    CameraAngle setAngle = XY;
+    CameraAngle setAngle = FPS;
     initCamera(setAngle, viewer);
     //simpleHighway(viewer);
-    cityBlock(viewer);
+
+    ProcessPointClouds<pcl::PointXYZI> pcProcessor;
+    std::vector<boost::filesystem::path> stream = pcProcessor.streamPcd("../src/sensors/data/pcd/data_1");
+    auto streamIterator = stream.begin();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloudI;
+
     while (!viewer->wasStopped())
     {
+        viewer->removeAllPointClouds();
+        viewer->removeAllShapes();
+
+        inputCloudI = pcProcessor.loadPcd((*streamIterator).string());
+        cityBlock(viewer, pcProcessor, inputCloudI);
+
+        ++streamIterator;
+        if (streamIterator == stream.end())
+        {
+            streamIterator = stream.begin();
+        }
+
         viewer->spinOnce();
     }
 }

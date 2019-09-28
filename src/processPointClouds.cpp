@@ -188,7 +188,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
     {
         std::cout << "Could not estimate plane parameters for given cloud" << std::endl;
     }
-    for (const auto& index : inlierIndices)
+    for (const auto index : inlierIndices)
     {
         inliers->indices.push_back(index);
     }
@@ -204,12 +204,12 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
 
 template<class PointT>
 void ProcessPointClouds<PointT>::proximity(
-    int pointIndex, typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>* tree,
+    int pointIndex, typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>& tree,
     float distanceTol, std::vector<int>& cluster, std::unordered_set<int>& processedPoints)
 {
     processedPoints.insert(pointIndex);
     cluster.push_back(pointIndex);
-    std::vector<int> nearbyPoints = tree->search(cloud->points[pointIndex], distanceTol);
+    std::vector<int> nearbyPoints = tree.search(cloud->points[pointIndex], distanceTol);
     for (int nearbyPoint : nearbyPoints)
     {
         if (processedPoints.find(nearbyPoint) == processedPoints.end())
@@ -221,7 +221,7 @@ void ProcessPointClouds<PointT>::proximity(
 
 template<class PointT>
 std::vector<std::vector<int>> ProcessPointClouds<PointT>::euclideanCluster(
-    typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>* tree, float distanceTol)
+    typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT, 3>& tree, float distanceTol)
 {
     std::vector<std::vector<int>> clusters;
     std::unordered_set<int> processedPoints;
@@ -272,14 +272,14 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 //        clusters.push_back(cloudCluster);
 //    }
 
-    KdTree<PointT, 3>* tree = new KdTree<PointT, 3>;
+    std::unique_ptr<KdTree<PointT, 3>> tree = std::unique_ptr<KdTree<PointT, 3>>(new KdTree<PointT, 3>);
 
     for (int i = 0; i < cloud->points.size(); i++)
     {
         tree->insert(cloud->points[i], i);
     }
 
-    std::vector<std::vector<int>> clusterIndices = euclideanCluster(cloud, tree, clusterTolerance);
+    std::vector<std::vector<int>> clusterIndices = euclideanCluster(cloud, *tree, clusterTolerance);
     for (const auto& cluster : clusterIndices)
     {
         if (cluster.size() < minSize || cluster.size() > maxSize)

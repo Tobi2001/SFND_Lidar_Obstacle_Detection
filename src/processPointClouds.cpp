@@ -43,10 +43,10 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
     boxFilter.filter(*cloudFiltered);
 
     pcl::CropBox<PointT> roofPointsFilter;
-    pcl::PointIndices::Ptr roofPoints(new pcl::PointIndices());
+    pcl::PointIndices::Ptr roofPoints(new pcl::PointIndices);
     roofPointsFilter.setInputCloud(cloudFiltered);
-    roofPointsFilter.setMin(Eigen::Vector4f(-2.f, -2.f, -2.f, 1.f));
-    roofPointsFilter.setMax(Eigen::Vector4f(3.f, 2.f, 2.f, 1.f));
+    roofPointsFilter.setMin(Eigen::Vector4f(-1.5f, -1.7f, -1.f, 1.f));
+    roofPointsFilter.setMax(Eigen::Vector4f(2.6f, 1.7f, -0.4f, 1.f));
     roofPointsFilter.filter(roofPoints->indices);
 
     pcl::ExtractIndices<PointT> extract;

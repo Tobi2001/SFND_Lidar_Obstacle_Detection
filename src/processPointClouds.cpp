@@ -73,7 +73,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
     typename pcl::PointCloud<PointT>::Ptr cloudFiltered(new pcl::PointCloud<PointT>);
     typename pcl::PointCloud<PointT>::Ptr cloudRemainders(new pcl::PointCloud<PointT>);
 
-    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    pcl::ExtractIndices<PointT> extract;
     extract.setInputCloud(cloud);
     extract.setIndices(inliers);
     extract.setNegative(false);

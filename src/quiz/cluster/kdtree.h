@@ -124,3 +124,16 @@ inline float KdTree<pcl::PointXYZ, 3>::pointComponent(const pcl::PointXYZ& point
           throw std::runtime_error("Invalid component index when accessing 3D-point");
     }
 }
+
+template<>
+inline float KdTree<pcl::PointXYZI, 3>::pointComponent(const pcl::PointXYZI& point, int componentIndex)
+{
+    switch (componentIndex)
+    {
+      case 0: return point.x;
+      case 1: return point.y;
+      case 2: return point.z;
+      default:
+          throw std::runtime_error("Invalid component index when accessing 3D-point");
+    }
+}

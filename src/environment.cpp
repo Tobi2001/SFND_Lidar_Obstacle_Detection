@@ -82,9 +82,22 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
         "../src/sensors/data/pcd/data_1/0000000000.pcd");
 
     auto filteredCloud = pcProcessor.FilterCloud(inputCloud, 0.2f, Eigen::Vector4f(-10.f, -5.f, -3.f, 1.f),
-            Eigen::Vector4f(15.f, 8.f, 1.f, 1.f));
+            Eigen::Vector4f(27.f, 6.5f, 1.f, 1.f));
 
-    renderPointCloud(viewer, filteredCloud, "inputCloud");
+    auto planeFilterPair = pcProcessor.SegmentPlane(filteredCloud, 100, 0.2f);
+    renderPointCloud(viewer, planeFilterPair.first, "PlanePoints", Color(0, 1, 0));
+
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pcProcessor.Clustering(planeFilterPair.second,
+            0.4f, 10, 1000);
+    int clusterId = 0;
+    std::vector<Color> colors = {Color(1, 0, 0), Color(0, 0, 1), Color(1, 1, 0)};
+    for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudClusters)
+    {
+        renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors[clusterId % colors.size()]);
+        Box box = pcProcessor.BoundingBox(cluster);
+        renderBox(viewer, box, clusterId);
+        ++clusterId;
+    }
 }
 
 

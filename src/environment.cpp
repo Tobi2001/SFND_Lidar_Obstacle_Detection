@@ -67,8 +67,24 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
         std::cout << "cluster size ";
         pcProcessor.numPoints(cluster);
         renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors[clusterId % colors.size()]);
+
+        Box box = pcProcessor.BoundingBox(cluster);
+        renderBox(viewer, box, clusterId);
+
         ++clusterId;
     }
+}
+
+void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
+{
+    ProcessPointClouds<pcl::PointXYZI> pcProcessor;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pcProcessor.loadPcd(
+        "../src/sensors/data/pcd/data_1/0000000000.pcd");
+
+    auto filteredCloud = pcProcessor.FilterCloud(inputCloud, 0.2f, Eigen::Vector4f(-10.f, -5.f, -4.f, 1.f),
+            Eigen::Vector4f(15.f, 8.f, 1.f, 1.f));
+
+    renderPointCloud(viewer, filteredCloud, "inputCloud");
 }
 
 
@@ -105,8 +121,8 @@ int main()
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
-    simpleHighway(viewer);
-
+    //simpleHighway(viewer);
+    cityBlock(viewer);
     while (!viewer->wasStopped())
     {
         viewer->spinOnce();
